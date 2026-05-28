@@ -1,10 +1,25 @@
 version: 2
+# Version-update PRs are suppressed (limit: 0). Security-update PRs
+# are always allowed by GitHub (the `open-pull-requests-limit` only
+# applies to version-update PRs); they show up as opened automatically
+# when an alert fires for a dependency whose current pin is vulnerable.
+# We accept those by merging the PR (which auto-closes the alert).
+#
+# The `ignore` block below excludes `transformers` from automatic
+# security PRs because the patched version (5.x) is a major API break
+# and `mimirag` only touches `transformers.MimiModel` /
+# `AutoFeatureExtractor` from the optional `mimi` extra (not from the
+# default CI matrix). The corresponding open alert is documented in
+# `TODO_v0.2.md` as a tolerable-risk pre-alpha exposure and will be
+# revisited in the `v0.1.1` live-backend bench cycle.
 updates:
   - package-ecosystem: pip
     directory: "/"
     schedule:
       interval: weekly
     open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "transformers"
   - package-ecosystem: github-actions
     directory: "/"
     schedule:

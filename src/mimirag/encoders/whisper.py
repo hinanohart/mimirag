@@ -26,6 +26,7 @@ class WhisperASR:
         self.device = device
         self.name = name
         self._model = whisper.load_model(model_size, device=device)
+        self.accepted_sample_rate: int | None = 16000
 
     def transcribe(self, waveform: np.ndarray, sample_rate: int) -> str:
         if waveform.ndim != 1:

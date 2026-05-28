@@ -21,11 +21,21 @@ class Encoder(Protocol):
     `encoders.mimi.MimiEncoder`. The pooled vector is what gets stored in
     the FAISS index; the TokenStream metadata is what gets persisted next
     to it for provenance.
+
+    `accepted_sample_rate` is part of the contract so callers can refuse
+    to dispatch a mismatched waveform before the per-backend `encode`
+    raises. ``None`` advertises "any positive sample rate". A concrete
+    int advertises a single Hz the backend will accept; pipelines must
+    resample upstream.
     """
 
     name: str
     sample_hz: float
     n_codebooks: int
+    accepted_sample_rate: int | None
+
+    @property
+    def pooled_dim(self) -> int: ...
 
     def encode(
         self, waveform: np.ndarray, sample_rate: int, source_id: str
@@ -52,9 +62,11 @@ class ASRBackend(Protocol):
     """Waveform → transcript.
 
     Implementations: `encoders.fake.FakeASR`, `encoders.whisper.WhisperASR`.
+    See `Encoder.accepted_sample_rate` docstring for the same contract.
     """
 
     name: str
+    accepted_sample_rate: int | None
 
     def transcribe(self, waveform: np.ndarray, sample_rate: int) -> str: ...
 

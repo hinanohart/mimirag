@@ -17,7 +17,7 @@ import hashlib
 
 import numpy as np
 
-from mimirag.models import TokenStream, pool_token_stream
+from mimirag.models import TokenStream
 
 
 def _seed_from_waveform(waveform: np.ndarray, salt: str = "") -> int:
@@ -52,6 +52,7 @@ class FakeMimiEncoder:
         self.sample_hz = sample_hz
         self.vocab_size = vocab_size
         self.name = name
+        self.accepted_sample_rate: int | None = None
 
     def encode(
         self, waveform: np.ndarray, sample_rate: int, source_id: str
@@ -140,6 +141,7 @@ class FakeASR:
 
     def __init__(self, name: str = "fake-asr") -> None:
         self.name = name
+        self.accepted_sample_rate: int | None = None
 
     def transcribe(self, waveform: np.ndarray, sample_rate: int) -> str:
         if waveform.ndim != 1:
@@ -180,4 +182,4 @@ class FakeASR:
         return " ".join(vocab[int(i)] for i in idxs)
 
 
-__all__ = ["FakeASR", "FakeMimiEncoder", "FakeTextEncoder", "pool_token_stream"]
+__all__ = ["FakeASR", "FakeMimiEncoder", "FakeTextEncoder"]

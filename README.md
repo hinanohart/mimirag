@@ -7,7 +7,7 @@ ablation against Whisper+BGE-M3 baselines.
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)](#status)
 
-> **Status: pre-alpha (`v0.1.0a2`).** Pre-alpha means the API may change,
+> **Status: pre-alpha (`v0.1.0a3`).** Pre-alpha means the API may change,
 > the public benchmark surface is small, and live Mimi GPU inference is
 > deferred to `v0.1.1`. See [CLAIM table](#claim-table) for what is
 > measured vs. what is engineered.
@@ -67,6 +67,14 @@ uv run mimirag bench --corpus tests/data/tiny --out bench/RESULTS.md --backend f
 > ⚠️ v0.1 keeps both indexes in-process; the `query` subcommand re-ingests
 > the corpus per invocation. Persisted index loading (real `--index`
 > flag) and live `mimi` backend retrieval ship in `v0.1.1`.
+>
+> ⚠️ The real `mimi` / `whisper` backends pin a single sample rate
+> (`MimiEncoder.accepted_sample_rate` = the loaded codec's
+> `feature_extractor.sampling_rate`, usually 24000 Hz; `WhisperASR` =
+> 16000 Hz). Pipelines must resample upstream — the encoders refuse a
+> mismatched waveform rather than silently downgrading audio. The
+> `fake-*` backends accept any positive Hz so the default CI matrix is
+> free of resampling concerns.
 
 See [`bench/RESULTS.md`](bench/RESULTS.md) for the latest measured
 numbers (with bootstrap 95 % CIs and `[MEASURED YYYY-MM-DD]` tags).
@@ -106,7 +114,7 @@ BenchHarness — Recall@k, MRR, nDCG, latency p50/p95 with bootstrap 95 % CI
 Protocols (`src/mimirag/protocols.py`):
 - `IndexBackend.add(key, vec) / search(q, k) → list[(key, score)]`
 - `Fuser.fuse(hits_per_source, k) → list[(key, score)]`
-- `Encoder.encode(raw, sr) → TokenStream`
+- `Encoder.encode(raw, sr) → TokenStream` (with `accepted_sample_rate: int | None` and `pooled_dim: int` advertised as part of the contract; `ASRBackend` carries the same `accepted_sample_rate` field)
 
 These typing.Protocols are kept inside the same repo at `v0.1` and may
 be extracted to `mimirag-core` only after we have a second consumer
@@ -116,8 +124,9 @@ be extracted to `mimirag-core` only after we have a second consumer
 
 | version | scope | gate |
 |---|---|---|
-| `v0.1.0a1` (this release) | 4-axis ablation, FAISS-CPU, synthetic + small public corpus, no PyPI, no GPU bench | passes S0–S10 |
-| `v0.1.0a2` | post-release audit fixes, Dependabot green, branch protection live | S11 audit |
+| `v0.1.0a1` | 4-axis ablation, FAISS-CPU, synthetic + small public corpus, no PyPI, no GPU bench | passed S0–S10 |
+| `v0.1.0a2` | post-release audit fixes, Dependabot green, branch protection live | passed S11 audit |
+| `v0.1.0a3` (this release) | post-/compact re-audit: Protocol `accepted_sample_rate` / `pooled_dim`, `pool_token_stream` trap removed from public surface, security PR #2 accepted, `transformers` alert documented | passed S11+ re-audit |
 | `v0.1.1` | PyPI, live Mimi GPU inference path, larger public corpus | Tier 1+2 done |
 | `v0.2`    | candidate: PolyglotMimi (Omnilingual ASR 1600 languages) or Rust hot-path | bench shows where the hot path is |
 

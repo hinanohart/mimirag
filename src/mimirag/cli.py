@@ -31,13 +31,7 @@ def _build_pipeline(backend: str) -> Pipeline:
         asr = get_asr("whisper")
     else:
         raise click.BadParameter(f"unknown backend: {backend!r}")
-    pooled_dim = getattr(enc, "pooled_dim", None)
-    if pooled_dim is None:
-        raise click.ClickException(
-            f"encoder {enc.name!r} does not expose `pooled_dim`; "
-            "extend its backend to advertise the index dim."
-        )
-    return Pipeline(encoder=enc, text_encoder=txt, asr=asr, codec_dim=int(pooled_dim))
+    return Pipeline(encoder=enc, text_encoder=txt, asr=asr, codec_dim=int(enc.pooled_dim))
 
 
 @click.group()

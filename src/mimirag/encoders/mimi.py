@@ -12,14 +12,9 @@ default CI matrix.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import numpy as np
 
 from mimirag.models import TokenStream
-
-if TYPE_CHECKING:  # pragma: no cover
-    pass
 
 
 class MimiEncoder:
@@ -49,6 +44,7 @@ class MimiEncoder:
         self.sample_hz = float(getattr(cfg, "frame_rate", 12.5))
         self.n_codebooks = int(getattr(cfg, "num_quantizers", 8))
         self.vocab_size = int(getattr(cfg, "codebook_size", 2048))
+        self.accepted_sample_rate: int | None = int(self._fe.sampling_rate)
 
     def encode(
         self, waveform: np.ndarray, sample_rate: int, source_id: str
