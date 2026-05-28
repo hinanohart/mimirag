@@ -1,0 +1,161 @@
+# mimirag
+
+Audio-native RAG over **Kyutai Mimi 12.5 Hz semantic tokens**, with a 4-axis
+ablation against Whisper+BGE-M3 baselines.
+
+[![CI](https://github.com/hinanohart/mimirag/actions/workflows/ci.yml/badge.svg)](https://github.com/hinanohart/mimirag/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)](#status)
+
+> **Status: pre-alpha (`v0.1.0a1`).** Pre-alpha means the API may change,
+> the public benchmark surface is small, and live Mimi GPU inference is
+> deferred to `v0.1.1`. See [CLAIM table](#claim-table) for what is
+> measured vs. what is engineered.
+
+## What this is
+
+mimirag indexes raw speech audio directly in the codebook space of the
+**Kyutai Mimi** neural audio codec — a 12.5 Hz, 8-codebook semantic +
+acoustic RVQ tokenizer — and runs retrieval over those tokens. This
+removes the Whisper → text → embedding round-trip that most audio RAG
+pipelines depend on.
+
+A baseline pipeline (Whisper + BGE-M3 + FAISS) is bundled in the same
+repo so every claim is **falsifiable by `mimirag bench`** under the same
+seed, corpus, and hardware.
+
+### Four retrieval axes (switchable at query time)
+
+| axis | encoder | use |
+|---|---|---|
+| `text-only` | Whisper → BGE-M3 | strong baseline |
+| `codec-only` | Mimi pooled RVQ | this work, modality-pure |
+| `hybrid` (default) | text + codec, fused with RRF | this work, default |
+| `baseline` | Whisper → BGE-M3 → FAISS (round-trip) | reference |
+
+## Install (pre-alpha, from source)
+
+```bash
+git clone https://github.com/hinanohart/mimirag
+cd mimirag
+uv sync --extra all
+uv run mimirag --help
+```
+
+PyPI publication is deferred to `v0.1.1` (after the post-release audit
+patch lands).
+
+## Quickstart
+
+```bash
+# ingest a folder of .wav into a codec index
+uv run mimirag ingest --corpus ./data/audio --index ./data/index
+
+# query a 5-second wav, hybrid (default) axis
+uv run mimirag query --index ./data/index --audio ./data/q.wav --axis hybrid --k 5
+
+# run the 4-axis benchmark on the small synthetic test corpus
+uv run mimirag bench --corpus ./tests/data/tiny --out ./bench/RESULTS.md
+```
+
+See [`bench/RESULTS.md`](bench/RESULTS.md) for the latest measured
+numbers (with bootstrap 95 % CIs and `[MEASURED YYYY-MM-DD]` tags).
+
+## CLAIM table
+
+This project deliberately separates **what we engineered** from **what
+we measured**. A short list of marketing superlatives is banned from
+this README and CI-grepped on every commit; see
+`scripts/honest_marketing_check.py` (`BANNED` list) for the exact regexes.
+
+| claim | type | evidence |
+|---|---|---|
+| To our knowledge, the first open-source RAG that indexes Mimi 12.5 Hz semantic tokens directly. | engineered novelty | `S0_GATE.md` § 4 (arxiv + GitHub + PwC, 0 hits at S0 time) |
+| 4-axis ablation against a Whisper+BGE-M3 baseline runs end-to-end on CPU. | engineered | `bench/RESULTS.md`, CI `bench-dry-run` job |
+| Apache-2.0 source. Mimi weights stay CC-BY-4.0 and are downloaded at runtime, not redistributed. | license | `LICENSE`, `NOTICE`, `pip-licenses --fail-on=GPL` CI job |
+| Performance superiority over the baseline. | **NOT CLAIMED** — requires `bench/RESULTS.md` with CI excluding 0. | See `bench/RESULTS.md`; if the bootstrap 95 % CI of (hybrid minus baseline) includes 0, RESULTS.md auto-prints "undetermined". |
+| Live Mimi GPU inference at scale. | **deferred to `v0.1.1`** | `S0_GATE.md` § scope |
+
+## Architecture
+
+```
+CLI (click)
+  │
+  ▼
+Pipeline (pydantic-typed)
+  ├─ MimiEncoder       (transformers, CC-BY-4.0 weights, runtime download)
+  ├─ CodecIndex        (FAISS-CPU, pooled per utterance)
+  ├─ WhisperASR        (Apache-2.0, baseline)
+  ├─ TextIndex         (BGE-M3 + FAISS)
+  └─ RetrievalFusion   (4-axis switch: text-only / codec-only / hybrid RRF / baseline)
+  │
+  ▼
+BenchHarness — Recall@k, MRR, nDCG, latency p50/p95 with bootstrap 95 % CI
+```
+
+Protocols (`src/mimirag/protocols.py`):
+- `IndexBackend.add(key, vec) / search(q, k) → list[(key, score)]`
+- `Fuser.fuse(hits_per_source, k) → list[(key, score)]`
+- `Encoder.encode(raw, sr) → TokenStream`
+
+These typing.Protocols are kept inside the same repo at `v0.1` and may
+be extracted to `mimirag-core` only after we have a second consumer
+(YAGNI; see `project_mimirag_architecture_2026-05-29.md`).
+
+## Status & scope
+
+| version | scope | gate |
+|---|---|---|
+| `v0.1.0a1` (this release) | 4-axis ablation, FAISS-CPU, synthetic + small public corpus, no PyPI, no GPU bench | passes S0–S10 |
+| `v0.1.0a2` | post-release audit fixes, Dependabot green, branch protection live | S11 audit |
+| `v0.1.1` | PyPI, live Mimi GPU inference path, larger public corpus | Tier 1+2 done |
+| `v0.2`    | candidate: PolyglotMimi (Omnilingual ASR 1600 languages) or Rust hot-path | bench shows where the hot path is |
+
+## Reproducibility
+
+```bash
+git clone https://github.com/hinanohart/mimirag
+cd mimirag && uv sync --extra dev --extra all
+uv run pytest -q
+uv run mypy src
+uv run ruff check
+uv run python scripts/honest_marketing_check.py
+```
+
+A clean clone on a freshly provisioned VM should reproduce `bench/RESULTS.md`
+up to numerical noise within the reported bootstrap 95 % CI; seeds are
+pinned (`MIMIRAG_SEED=42`) and the corpus is bundled at `tests/data/tiny`.
+
+## Honest-marketing CI
+
+`scripts/honest_marketing_check.py` greps `README.md`, `bench/RESULTS.md`,
+and `src/**/*.py` for a banned-vocabulary list (marketing superlatives
+and "fully automatic"/"persistent" Japanese phrases). The exact regexes
+live in the `BANNED` constant in that script. Lines containing
+`# HONEST-CLAIM:` may opt out individually. Numbers in `bench/RESULTS.md`
+must carry a `[MEASURED YYYY-MM-DD]` tag.
+
+## License
+
+Source code: **Apache-2.0** (see [`LICENSE`](LICENSE)).
+Third-party model weights retain their own licenses (see [`NOTICE`](NOTICE)),
+notably Kyutai Mimi (**CC-BY-4.0**) — weights are downloaded at runtime
+and are **not** redistributed in this repo.
+
+If you use mimirag in academic work, please also cite Mimi:
+```
+@misc{kyutai2024mimi,
+  title  = {Mimi: a low-bitrate streaming neural audio codec},
+  author = {Kyutai Labs},
+  year   = {2024},
+  url    = {https://huggingface.co/kyutai/mimi},
+}
+```
+
+## Acknowledgements
+
+mimirag builds on Kyutai's Mimi codec (CC-BY-4.0), Hugging Face
+`transformers`, OpenAI Whisper (MIT), BAAI BGE-M3 (MIT), and FAISS (MIT).
+The 4-axis ablation pattern and honest-marketing CI grep are reused
+from the [`hinanohart`](https://github.com/hinanohart) toolchain
+(`foldconsensus`, `scorewright`, `saelet`).

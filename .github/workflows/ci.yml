@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: lint (ruff + format)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --extra dev
+      - name: Ruff check
+        run: uv run ruff check
+      - name: Ruff format check
+        run: uv run ruff format --check
+
+  typecheck:
+    name: mypy --strict
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --extra dev
+      - name: Mypy
+        run: uv run mypy src
+
+  test:
+    name: pytest (${{ matrix.os }}, py${{ matrix.python-version }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.10', '3.11', '3.12']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --extra dev
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+      - name: Pytest with coverage
+        run: uv run pytest --cov=mimirag --cov-report=term-missing --cov-fail-under=85
+
+  license-check:
+    name: pip-licenses (no GPL/LGPL/AGPL)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --extra dev
+      - name: License gate
+        run: |
+          uv run pip-licenses --format=markdown \
+            --fail-on='GPL;LGPL;AGPL'
+
+  honest-marketing:
+    name: honest-marketing grep
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run honest-marketing grep
+        run: python scripts/honest_marketing_check.py

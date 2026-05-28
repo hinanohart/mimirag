@@ -1,0 +1,48 @@
+mimirag
+Copyright 2026 hinanohart
+
+This product includes software developed by hinanohart and contributors,
+licensed under the Apache License, Version 2.0.
+
+----------------------------------------------------------------------
+Third-Party Notices
+----------------------------------------------------------------------
+
+This product OPTIONALLY uses, but does not redistribute, the following
+third-party model weights at runtime:
+
+1. Kyutai Mimi neural audio codec
+   - Source: https://huggingface.co/kyutai/mimi
+   - License: CC-BY-4.0 (Creative Commons Attribution 4.0 International)
+   - Attribution: Defossez et al., Kyutai Labs (2024). Mimi is a
+     low-bitrate neural audio codec with 12.5 Hz semantic tokens used by
+     the Moshi speech model.
+   - mimirag downloads these weights at runtime via the Hugging Face
+     Hub. The weights are NOT bundled in this distribution.
+
+2. OpenAI Whisper (optional, baseline)
+   - License: MIT
+   - Source: https://github.com/openai/whisper
+   - Used only as a baseline for the 4-axis retrieval ablation in
+     `bench/`. Weights downloaded at runtime.
+
+3. BAAI BGE-M3 text embedding (optional, baseline + hybrid path)
+   - License: MIT
+   - Source: https://huggingface.co/BAAI/bge-m3
+   - Weights downloaded at runtime.
+
+All third-party model weights remain under their respective licenses.
+Users must comply with the original license terms when using or
+redistributing those weights.
+
+----------------------------------------------------------------------
+HONEST-CLAIM tags
+----------------------------------------------------------------------
+
+This project enforces an honest-marketing CI grep
+(`scripts/honest_marketing_check.py`) that bans phrases such as
+"world first", "SOTA", "perfect", "guaranteed", "完全自動", "永続" from
+the README, RESULTS.md, and source docstrings. Performance numbers in
+RESULTS.md must carry a `[MEASURED YYYY-MM-DD]` tag and a corresponding
+bootstrap 95% CI. Implementation novelty is qualified with
+"to our knowledge" and demoted on counter-evidence (see S0_GATE.md).

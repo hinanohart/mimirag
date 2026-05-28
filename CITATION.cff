@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+title: mimirag
+message: >-
+  If you use mimirag in academic work, please cite this software
+  AND the Kyutai Mimi codec it builds on.
+type: software
+authors:
+  - name: hinanohart
+license: Apache-2.0
+repository-code: 'https://github.com/hinanohart/mimirag'
+version: 0.1.0a1
+date-released: '2026-05-29'
+abstract: >-
+  Audio-native RAG over Kyutai Mimi 12.5 Hz semantic tokens with a
+  4-axis ablation against Whisper+BGE-M3 baselines. Pre-alpha.
+keywords:
+  - rag
+  - audio
+  - mimi
+  - neural-audio-codec
+  - semantic-tokens
+references:
+  - type: software
+    title: Mimi
+    authors:
+      - name: Kyutai Labs
+    license: CC-BY-4.0
+    url: https://huggingface.co/kyutai/mimi
