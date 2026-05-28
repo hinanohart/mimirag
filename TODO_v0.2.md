@@ -20,13 +20,13 @@ under `open_blockers`.
   corpus path lands.
 
 ## Cross-repo follow-up
-- **conformlock v0.2 PR (R17 demotion)**: the original `mcgate Bus`
-  concept dissolved into the `conformlock`/`saegate`/`foldconsensus`
-  trio at S0 self-overlap. Open a PR against `hinanohart/conformlock`
-  to make its hard-gate API consume an arbitrary `Validator` Protocol
-  (matching `mimirag.protocols.IndexBackend` style). Tracked here so
-  the demotion is visible; the actual PR is filed in the `conformlock`
-  repo, not here.
+- **conformlock follow-up PR (status: not yet filed)**: the original
+  `mcgate Bus` concept dissolved into the `conformlock` / `saegate` /
+  `foldconsensus` trio at S0 self-overlap. The follow-up work is to
+  open a PR against `hinanohart/conformlock` that makes its hard-gate
+  API consume an arbitrary `Validator` Protocol (matching
+  `mimirag.protocols.IndexBackend` style). This is the only
+  cross-repo task carried out of v0.1; track here until it lands.
 
 ## Releases
 - **PyPI publication** (`v0.1.1`): blocked on post-release audit (S11)

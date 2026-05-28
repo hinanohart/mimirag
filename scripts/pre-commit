@@ -1,25 +1,62 @@
 #!/usr/bin/env bash
-# Reject commits whose subject/body name an R-number (R1/R2/.../R18).
-# Per feedback_no-r-numbers-in-commits-2026-05-15: internal rules
-# numbering must not leak into the public git history.
+# Reject commits that introduce internal rule-number references
+# (e.g. anti-pattern: leaking "R7" / "R11" / "R15" memory-system labels
+# into public git history). See `feedback_no-r-numbers-in-commits...`.
 #
-# Install (run once per clone):
+# Two invocation modes:
+#   (1) commit-msg hook  — arg=path to commit-message file → scan that file
+#   (2) pre-commit hook  — no arg → scan **only added lines** in the staged
+#       diff (so existing tracked content that legitimately discusses the
+#       rule-numbering scheme does NOT trip the hook; only NEW additions
+#       in NEW commits are policed).
+#
+# Files allowed to discuss the scheme without tripping the hook:
+ALLOW_PATHS=(
+    "scripts/pre-commit"
+    "TODO_v0.2.md"
+)
+# The pattern we refuse to ship in commit messages and added diff lines:
+PATTERN='\b[Rr][0-9]+\b'
+
+# Install once per clone:
+#   ln -sf ../../scripts/pre-commit .git/hooks/pre-commit
 #   ln -sf ../../scripts/pre-commit .git/hooks/commit-msg
-#   chmod +x scripts/pre-commit .git/hooks/commit-msg
+#   chmod +x scripts/pre-commit
 set -euo pipefail
 
-msg_file="${1:-}"
-if [[ -z "$msg_file" ]] || [[ ! -f "$msg_file" ]]; then
-    if git diff --cached --name-only -z | xargs -0 grep -nE '\bR[0-9]+\b' >/dev/null 2>&1; then
-        echo "pre-commit: refusing to commit lines that name R-numbers (R1..R18)" >&2
+is_allowed() {
+    local path="$1"
+    for allowed in "${ALLOW_PATHS[@]}"; do
+        if [[ "$path" == "$allowed" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+if [[ $# -ge 1 && -f "$1" ]]; then
+    # commit-msg mode
+    if grep -qE "$PATTERN" "$1"; then
+        echo "commit-msg: refusing message that names an internal rule-number" >&2
+        grep -nE "$PATTERN" "$1" >&2 || true
         exit 1
     fi
     exit 0
 fi
 
-if grep -qE '\bR[0-9]+\b' "$msg_file"; then
-    echo "commit-msg: refusing message that names an R-number" >&2
-    grep -nE '\bR[0-9]+\b' "$msg_file" >&2 || true
-    exit 1
-fi
-exit 0
+# pre-commit mode: only scan ADDED lines in staged diff, skipping allow-list paths.
+hit=0
+while IFS= read -r path; do
+    [[ -z "$path" ]] && continue
+    if is_allowed "$path"; then
+        continue
+    fi
+    if git diff --cached -U0 -- "$path" \
+        | grep -E '^\+[^+]' \
+        | grep -nE "$PATTERN" >/dev/null 2>&1; then
+        echo "pre-commit: $path introduces an internal rule-number token" >&2
+        git diff --cached -U0 -- "$path" | grep -nE "^\+.*$PATTERN" >&2 || true
+        hit=1
+    fi
+done < <(git diff --cached --name-only --diff-filter=AM)
+exit "$hit"
