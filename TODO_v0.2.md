@@ -45,13 +45,32 @@ under `open_blockers`.
 - **`mimirag-core` extraction**: only when a second consumer exists
   (YAGNI per protocols.py:1-5).
 
-## Closed S8-critic findings (not in v0.1.0a1)
+## Closed audit findings
+
+### Pre-release internal critic (S8 round 1, S8 round 2) — closed in v0.1.0a1
 | finding | severity | landing |
 |---|---|---|
-| README claims Whisper as Apache-2.0 (it is MIT) | MAJOR | fixed in v0.1.0a1 patch chain (this commit) |
-| `bench-dry-run` CI job referenced in README but absent | MAJOR | fixed in v0.1.0a1 patch chain (this commit) |
-| `poc/s0_smoke.py` promised at S0 but missing | MAJOR | fixed in v0.1.0a1 patch chain (this commit) |
-| `FakeMimiEncoder.pool` / `MimiEncoder.pool` lack 0-frame guard | MAJOR | fixed in v0.1.0a1 patch chain (this commit) |
-| `.MIMIRAG-progress.json` / `.MIMIRAG-builder-lock.json` not at repo root | MAJOR | fixed (gitignored, but present for /compact recovery) |
-| `tqdm` unused dependency | MINOR | fixed (removed) |
-| diff-CI math drift between docstring and impl | MAJOR | fixed (paired bootstrap) |
+| README claims Whisper as Apache-2.0 (it is MIT) | MAJOR | v0.1.0a1 patch chain |
+| `bench-dry-run` CI job referenced in README but absent | MAJOR | v0.1.0a1 patch chain |
+| `poc/s0_smoke.py` promised at S0 but missing | MAJOR | v0.1.0a1 patch chain |
+| `FakeMimiEncoder.pool` / `MimiEncoder.pool` lack 0-frame guard | MAJOR | v0.1.0a1 patch chain |
+| `.MIMIRAG-progress.json` / `.MIMIRAG-builder-lock.json` not at repo root | MAJOR | v0.1.0a1 patch chain (gitignored, but present for /compact recovery) |
+| `tqdm` unused dependency | MINOR | v0.1.0a1 (removed) |
+| diff-CI math drift between docstring and impl | MAJOR | v0.1.0a1 (paired bootstrap) |
+| pre-commit hook self-bombs the repo's own tracked content | MAJOR | v0.1.0a1 (diff-only scan + allow-list) |
+| TODO_v0.2 phrasing implied conformlock PR was already filed | MINOR | v0.1.0a1 (rewritten) |
+
+### Post-release independent audit (S11) — closed in v0.1.0a2
+| finding | severity | landing |
+|---|---|---|
+| GitHub shows the project's license as "Other" (not Apache-2.0) because the LICENSE file diverges from the SPDX template | MAJOR | v0.1.0a2 (canonical text restored) |
+| `recall_at_k` denominator silently caps below 1.0 when `|relevant| > k` | HIGH | v0.1.0a2 (denominator switched to `min(k, |relevant|)` + regression test) |
+| `MimiEncoder.pool` does not assert `max(token id) < vocab_size`; a future Mimi config drift would crash inside `bincount` | HIGH | v0.1.0a2 (explicit assertion with both numbers in the error message) |
+| README opening reads "audio-native RAG" but the package ships no generator | MEDIUM | v0.1.0a2 (re-framed as "audio-native retriever, pair with any LLM generator") |
+| README CLAIM table did not hedge the novelty claim against BEST-STD class prior art for speech-token retrieval | MEDIUM | v0.1.0a2 (scope-limited the "first" claim to the Mimi adaptation) |
+| Axis table used "strong baseline" / "modality-pure" weasel phrasing | MINOR | v0.1.0a2 (neutral prose; explicit `baseline == text-only` callout) |
+| In-flight Dependabot version-update PR contradicted the `limit: 0` policy | MINOR | v0.1.0a2 (closed PR #1 with explanatory comment) |
+
+## Open Dependabot security alerts (visible after first push)
+- **pytest** — tmpdir handling. Dev-only dependency; bump in v0.1.0a2 maintenance cycle.
+- **transformers** — `Trainer` arbitrary code execution. Only reachable via the `mimi` extra in user code; the default CI matrix does not import `transformers`. Bump on the next live-backend audit cycle.
