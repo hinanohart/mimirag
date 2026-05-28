@@ -8,7 +8,7 @@ authors:
   - name: hinanohart
 license: Apache-2.0
 repository-code: 'https://github.com/hinanohart/mimirag'
-version: 0.1.0a1
+version: 0.1.0a2
 date-released: '2026-05-29'
 abstract: >-
   Audio-native RAG over Kyutai Mimi 12.5 Hz semantic tokens with a

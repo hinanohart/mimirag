@@ -36,11 +36,20 @@ class QueryItem:
 
 
 def recall_at_k(hits: list[str], relevant: frozenset[str], k: int) -> float:
+    """Recall@k = |hits[:k] ∩ relevant| / min(k, |relevant|).
+
+    The `min(k, |relevant|)` denominator (the "achievable recall"
+    convention used by the same-file `ndcg_at_k`) lets the metric
+    reach 1.0 on a top-k ranking that fills every available slot with
+    a relevant doc, even when the corpus has more relevant documents
+    than the cutoff allows the ranker to return.
+    """
     if not relevant:
         return 0.0
     truncated = hits[:k]
     rel_hit = sum(1 for h in truncated if h in relevant)
-    return rel_hit / float(len(relevant))
+    denom = min(k, len(relevant))
+    return rel_hit / float(denom)
 
 
 def reciprocal_rank(hits: list[str], relevant: frozenset[str]) -> float:

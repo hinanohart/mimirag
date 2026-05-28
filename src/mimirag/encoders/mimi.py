@@ -90,6 +90,12 @@ class MimiEncoder:
             raise ValueError(f"expected ({self.n_codebooks}, T) tokens, got shape {tokens.shape}")
         if tokens.shape[1] == 0:
             raise ValueError("token stream has 0 frames")
+        max_id = int(tokens.max())
+        if max_id >= self.vocab_size:
+            raise ValueError(
+                f"token id {max_id} exceeds advertised vocab_size {self.vocab_size}; "
+                "the loaded Mimi config's codebook_size and the observed tokens disagree"
+            )
         out = np.zeros((self.n_codebooks * self.vocab_size,), dtype=np.float32)
         for ci in range(self.n_codebooks):
             counts = np.bincount(tokens[ci], minlength=self.vocab_size).astype(np.float32)
