@@ -49,7 +49,7 @@ covers them in `TODO_v0.2.md` (lines 50-61).
 - `v0.1.0a1` HEAD: tag `v0.1.0a1` (commit `f960152` was the `v0.1.0a2`
   release commit).
 - `v0.1.0a2` audit cycle verified by an independent post-/compact
-  re-audit (see `AUDIT_v0.1.0a2.md`).
+  re-audit (see `AUDIT_v0.1.0a3.md`).
 - Coverage of the audit surface: `src/mimirag/` (15 files,
   ~1.2 kLOC), `tests/` (95 tests at the time of `v0.1.0a2`), CI
   matrix (11 required status checks), GitHub repo settings.
