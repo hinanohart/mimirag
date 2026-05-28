@@ -7,7 +7,7 @@ ablation against Whisper+BGE-M3 baselines.
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange)](#status)
 
-> **Status: pre-alpha (`v0.1.0a1`).** Pre-alpha means the API may change,
+> **Status: pre-alpha (`v0.1.0a2`).** Pre-alpha means the API may change,
 > the public benchmark surface is small, and live Mimi GPU inference is
 > deferred to `v0.1.1`. See [CLAIM table](#claim-table) for what is
 > measured vs. what is engineered.
