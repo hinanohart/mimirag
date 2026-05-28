@@ -3,9 +3,12 @@
 Honesty rules:
 - Every reported number gets a `[MEASURED YYYY-MM-DD]` tag and a
   bootstrap 95 % CI alongside the point estimate.
-- If the CI of `(hybrid - baseline)` contains 0, the auto-rendered
-  RESULTS.md prints "undetermined" rather than implying superiority.
-- The CI is computed at the per-query level (resample queries with
+- The hybrid-vs-baseline difference CI is a **paired** bootstrap
+  (resample one query-index array, take mean of `a[idx] - b[idx]`),
+  not the difference of marginal CIs.
+- If that paired CI contains 0, the auto-rendered RESULTS.md prints
+  "undetermined" rather than implying superiority.
+- All CIs are computed at the per-query level (resample queries with
   replacement, B=1000 by default).
 """
 
@@ -72,6 +75,33 @@ def _bootstrap_ci(values: list[float], n_boot: int = 1000, seed: int = 42) -> tu
     return float(lo), float(hi)
 
 
+def _paired_bootstrap_diff_ci(
+    a: list[float], b: list[float], n_boot: int = 1000, seed: int = 42
+) -> tuple[float, float]:
+    """Paired-bootstrap 95% percentile CI for mean(a) - mean(b).
+
+    Resamples a single query-index array of length len(a)==len(b) per
+    iteration and takes the per-resample mean of `a[idx] - b[idx]`.
+    This is the correct estimator for the difference of two metrics
+    measured on the **same** queries, and is strictly tighter than the
+    marginal-CI difference (which would be a Bonferroni-shaped union).
+    """
+    if len(a) != len(b):
+        raise ValueError(f"paired diff requires equal length, got {len(a)} vs {len(b)}")
+    if len(a) == 0:
+        return (float("nan"), float("nan"))
+    rng = np.random.default_rng(seed)
+    arr_a = np.asarray(a, dtype=np.float64)
+    arr_b = np.asarray(b, dtype=np.float64)
+    diffs = np.empty(n_boot, dtype=np.float64)
+    n = len(arr_a)
+    for k in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        diffs[k] = (arr_a[idx] - arr_b[idx]).mean()
+    lo, hi = np.percentile(diffs, [2.5, 97.5])
+    return float(lo), float(hi)
+
+
 @dataclass(frozen=True)
 class AxisStats:
     axis: Axis
@@ -84,6 +114,9 @@ class AxisStats:
     latency_p50_ms: float
     latency_p95_ms: float
     n_queries: int
+    # Kept so render_results_md can compute a paired-bootstrap diff CI
+    # between hybrid and baseline (the marginal-CI difference is wrong).
+    per_query_recall: tuple[float, ...] = ()
 
 
 def run_bench(
@@ -128,6 +161,7 @@ def run_bench(
                 latency_p50_ms=float(np.percentile(lat_arr, 50)),
                 latency_p95_ms=float(np.percentile(lat_arr, 95)),
                 n_queries=len(queries),
+                per_query_recall=tuple(recalls),
             )
         )
     return out
@@ -143,23 +177,40 @@ def render_results_md(
     hybrid = next((s for s in stats if s.axis == "hybrid"), None)
     baseline = next((s for s in stats if s.axis == "baseline"), None)
     superiority = ""
-    if hybrid is not None and baseline is not None:
-        diff_lo = hybrid.recall_at_5_ci[0] - baseline.recall_at_5_ci[1]
-        diff_hi = hybrid.recall_at_5_ci[1] - baseline.recall_at_5_ci[0]
+    if (
+        hybrid is not None
+        and baseline is not None
+        and hybrid.per_query_recall
+        and baseline.per_query_recall
+        and len(hybrid.per_query_recall) == len(baseline.per_query_recall)
+    ):
+        diff_lo, diff_hi = _paired_bootstrap_diff_ci(
+            list(hybrid.per_query_recall),
+            list(baseline.per_query_recall),
+            n_boot=1000,
+            seed=42,
+        )
         if diff_lo > 0:
             superiority = (
-                "**hybrid > baseline** on Recall@5 (95 % CI of the difference "
-                "lies strictly above 0)."
+                "On Recall@5, the paired-bootstrap 95 % CI of "
+                "(hybrid - baseline) is "
+                f"[{diff_lo:.3f}, {diff_hi:.3f}], strictly above 0: "
+                "**hybrid outperforms baseline on this corpus**."
             )
         elif diff_hi < 0:
             superiority = (
-                "**hybrid < baseline** on Recall@5 (95 % CI of the difference "
-                "lies strictly below 0)."
+                "On Recall@5, the paired-bootstrap 95 % CI of "
+                "(hybrid - baseline) is "
+                f"[{diff_lo:.3f}, {diff_hi:.3f}], strictly below 0: "
+                "**baseline outperforms hybrid on this corpus**."
             )
         else:
             superiority = (
-                "Recall@5 difference between hybrid and baseline is "
-                "**undetermined** at the 95 % bootstrap CI level for this corpus."
+                "On Recall@5, the paired-bootstrap 95 % CI of "
+                "(hybrid - baseline) is "
+                f"[{diff_lo:.3f}, {diff_hi:.3f}], containing 0: "
+                "the difference between hybrid and baseline is "
+                "**undetermined** on this corpus."
             )
     is_fake = "fake" in backend_desc.lower()
     fake_banner = (

@@ -90,6 +90,7 @@ def test_render_results_md_has_measured_tag() -> None:
             latency_p50_ms=10.0,
             latency_p95_ms=15.0,
             n_queries=5,
+            per_query_recall=(0.5, 0.5, 0.5, 0.5, 0.5),
         ),
         AxisStats(
             axis="baseline",
@@ -102,6 +103,7 @@ def test_render_results_md_has_measured_tag() -> None:
             latency_p50_ms=5.0,
             latency_p95_ms=8.0,
             n_queries=5,
+            per_query_recall=(0.5, 0.5, 0.5, 0.5, 0.5),
         ),
     ]
     md = render_results_md(

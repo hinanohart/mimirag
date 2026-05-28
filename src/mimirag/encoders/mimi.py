@@ -86,6 +86,10 @@ class MimiEncoder:
         return stream, tokens
 
     def pool(self, stream: TokenStream, tokens: np.ndarray) -> np.ndarray:
+        if tokens.ndim != 2 or tokens.shape[0] != self.n_codebooks:
+            raise ValueError(f"expected ({self.n_codebooks}, T) tokens, got shape {tokens.shape}")
+        if tokens.shape[1] == 0:
+            raise ValueError("token stream has 0 frames")
         out = np.zeros((self.n_codebooks * self.vocab_size,), dtype=np.float32)
         for ci in range(self.n_codebooks):
             counts = np.bincount(tokens[ci], minlength=self.vocab_size).astype(np.float32)

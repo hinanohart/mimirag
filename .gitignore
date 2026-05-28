@@ -44,3 +44,7 @@ hf_cache/
 
 # uv
 .python-version
+
+# Operational session state (not artefact)
+.MIMIRAG-progress.json
+.MIMIRAG-builder-lock.json

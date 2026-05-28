@@ -523,7 +523,6 @@ dependencies = [
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pydantic" },
     { name = "soundfile" },
-    { name = "tqdm" },
 ]
 
 [package.optional-dependencies]
@@ -572,7 +571,6 @@ requires-dist = [
     { name = "sentence-transformers", marker = "extra == 'text'", specifier = ">=2.7,<5.0" },
     { name = "soundfile", specifier = ">=0.12,<1.0" },
     { name = "torch", marker = "extra == 'mimi'", specifier = ">=2.2,<3.0" },
-    { name = "tqdm", specifier = ">=4.66,<5.0" },
     { name = "transformers", marker = "extra == 'mimi'", specifier = ">=4.45,<5.0" },
 ]
 provides-extras = ["mimi", "text", "asr", "all", "dev"]

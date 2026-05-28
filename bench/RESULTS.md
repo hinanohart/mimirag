@@ -8,12 +8,12 @@
 
 | axis | Recall@5 (95% CI) | MRR (95% CI) | nDCG@5 (95% CI) | latency p50 / p95 (ms) | n queries |
 |---|---|---|---|---|---|
-| `text-only` | 1.000 [1.000, 1.000] | 1.000 [1.000, 1.000] | 1.000 [1.000, 1.000] | 0.2 / 0.2 | 8 |
-| `codec-only` | 0.625 [0.250, 0.875] | 0.448 [0.156, 0.781] | 0.491 [0.179, 0.804] | 0.2 / 0.4 | 8 |
-| `hybrid` | 1.000 [1.000, 1.000] | 0.667 [0.422, 0.906] | 0.749 [0.561, 0.929] | 0.5 / 0.6 | 8 |
+| `text-only` | 1.000 [1.000, 1.000] | 1.000 [1.000, 1.000] | 1.000 [1.000, 1.000] | 0.2 / 0.4 | 8 |
+| `codec-only` | 0.625 [0.250, 0.875] | 0.448 [0.156, 0.781] | 0.491 [0.179, 0.804] | 0.4 / 0.6 | 8 |
+| `hybrid` | 1.000 [1.000, 1.000] | 0.667 [0.422, 0.906] | 0.749 [0.561, 0.929] | 0.7 / 1.0 | 8 |
 | `baseline` | 1.000 [1.000, 1.000] | 1.000 [1.000, 1.000] | 1.000 [1.000, 1.000] | 0.1 / 0.2 | 8 |
 
-Recall@5 difference between hybrid and baseline is **undetermined** at the 95 % bootstrap CI level for this corpus.
+On Recall@5, the paired-bootstrap 95 % CI of (hybrid - baseline) is [0.000, 0.000], containing 0: the difference between hybrid and baseline is **undetermined** on this corpus.
 
 ## Honest-marketing notes
 

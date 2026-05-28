@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Reject commits whose subject/body name an R-number (R1/R2/.../R18).
+# Per feedback_no-r-numbers-in-commits-2026-05-15: internal rules
+# numbering must not leak into the public git history.
+#
+# Install (run once per clone):
+#   ln -sf ../../scripts/pre-commit .git/hooks/commit-msg
+#   chmod +x scripts/pre-commit .git/hooks/commit-msg
+set -euo pipefail
+
+msg_file="${1:-}"
+if [[ -z "$msg_file" ]] || [[ ! -f "$msg_file" ]]; then
+    if git diff --cached --name-only -z | xargs -0 grep -nE '\bR[0-9]+\b' >/dev/null 2>&1; then
+        echo "pre-commit: refusing to commit lines that name R-numbers (R1..R18)" >&2
+        exit 1
+    fi
+    exit 0
+fi
+
+if grep -qE '\bR[0-9]+\b' "$msg_file"; then
+    echo "commit-msg: refusing message that names an R-number" >&2
+    grep -nE '\bR[0-9]+\b' "$msg_file" >&2 || true
+    exit 1
+fi
+exit 0

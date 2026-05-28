@@ -87,3 +87,29 @@ jobs:
           python-version: '3.12'
       - name: Run honest-marketing grep
         run: python scripts/honest_marketing_check.py
+
+  bench-dry-run:
+    name: bench dry-run (fake backend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --extra dev
+      - name: S0 POC smoke
+        run: uv run python poc/s0_smoke.py
+      - name: Generate tiny corpus
+        run: uv run mimirag make-tiny --out-dir tests/data/tiny --n 8
+      - name: Run 4-axis bench (fake backend)
+        run: |
+          uv run mimirag bench \
+            --corpus tests/data/tiny \
+            --out /tmp/RESULTS.md \
+            --backend fake \
+            --n-boot 200
+      - name: Assert RESULTS contains the [MEASURED] tag
+        run: grep -q '^\[MEASURED ' /tmp/RESULTS.md
+      - name: Assert RESULTS carries the [BACKEND fake] banner
+        run: grep -q '\[BACKEND fake\]' /tmp/RESULTS.md
