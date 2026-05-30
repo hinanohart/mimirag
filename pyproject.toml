@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10,<3.13"
 license = { text = "MIT" }
 authors = [{ name = "hinanohart" }]
-keywords = ["rag", "retrieval", "audio", "mimi", "neural-audio-codec", "semantic-tokens", "apache-2"]
+keywords = ["rag", "retrieval", "audio", "mimi", "neural-audio-codec", "semantic-tokens"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
