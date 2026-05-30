@@ -6,7 +6,7 @@ message: >-
 type: software
 authors:
   - name: hinanohart
-license: Apache-2.0
+license: MIT
 repository-code: 'https://github.com/hinanohart/mimirag'
 version: 0.1.0a2
 date-released: '2026-05-29'
